@@ -8,13 +8,18 @@ import android.util.Log;
 import io.reactivex.Observable;
 import io.reactivex.Observer;
 import io.reactivex.android.schedulers.AndroidSchedulers;
+import io.reactivex.disposables.CompositeDisposable;
 import io.reactivex.disposables.Disposable;
+import io.reactivex.functions.Consumer;
 import io.reactivex.functions.Predicate;
 import io.reactivex.schedulers.Schedulers;
 
 public class MainActivity extends AppCompatActivity {
 
     private static final String TAG = MainActivity.class.getSimpleName();
+
+    // var
+    private CompositeDisposable disposable = new CompositeDisposable();
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -28,9 +33,9 @@ public class MainActivity extends AppCompatActivity {
                     @Override
                     public boolean test(Task task) throws Exception {
                         Log.d(TAG, "test: " + Thread.currentThread().getName());
-                        try{
+                        try {
                             Thread.sleep(1000);
-                        }catch (InterruptedException e){
+                        } catch (InterruptedException e) {
                             e.printStackTrace();
                         }
                         return task.isComplete();
@@ -42,6 +47,8 @@ public class MainActivity extends AppCompatActivity {
             @Override
             public void onSubscribe(Disposable d) {
                 Log.d(TAG, "onSubscribe: called");
+
+                disposable.add(d);
             }
 
             @Override
@@ -63,6 +70,19 @@ public class MainActivity extends AppCompatActivity {
             }
         });
 
+        disposable.add(
+                taskObservable.subscribe(new Consumer<Task>() {
+                    @Override
+                    public void accept(Task task) throws Exception {
 
+                    }
+                }));
+    }
+
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+
+        disposable.clear();
     }
 }
